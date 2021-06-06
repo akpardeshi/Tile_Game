@@ -1,0 +1,163 @@
+<! DOCTYPE HTML>
+<HTML>
+	<HEAD>
+		<TITLE>
+			Tile Game
+		</TITLE>
+
+		<STYLE>
+			canvas{
+				background-color: gray;
+			}
+		</STYLE>
+
+		<SCRIPT src = "C_Square.js"></SCRIPT>
+		<SCRIPT src = "F_ClearCanvas.js"></SCRIPT>
+		<SCRIPT src = "E_Events.js"></SCRIPT>
+		<SCRIPT src = "C_Button.js"></SCRIPT>
+		<SCRIPT src = "C_Text.js"></SCRIPT>
+	</HEAD>
+
+	<BODY>
+		<CANVAS id = "MyCanvas" width = "600" height = "600">
+		</CANVAS>
+
+		<SCRIPT>
+			// this is the code to get context and canvas from the document
+			// we are going to use this context to refer to the canvas in this game
+
+			// getting canvas
+			var g_Canvas =  document.getElementById("MyCanvas");
+
+			// getting context
+			var g_Ctx = g_Canvas.getContext("2d");
+
+			// getting canvas width
+			var g_CanvasWidth = g_Canvas.width;
+
+			// getting canvas height
+			var g_CanvasHeight = g_Canvas.height;
+
+			// the next part will set the FPS of the game
+			var g_Fps = 30;
+			var g_SetInterval = 1000 / g_Fps;
+			var g_NumberOfSquares = 16;
+			var g_goSquareArray = F_CreateSquares( g_NumberOfSquares, 100, 100, 100, 100);
+			var g_Moves = 0;
+
+			// this line will disable the default right click operation
+			// that means it will disable right click popup menu
+			g_Canvas.addEventListener("contextmenu", e => e.preventDefault());
+
+			// there are 3 states of the game
+			// 1 Start >> will be default and it display the main menu when we start the game
+			// 2 Running >> after the user clicks on the start button the state will change from Start to Running
+			// 3 Completed >>  this state will be visible after player completes the game
+			var g_StrState = "Start";
+
+			var g_Text = "CJFGIEOBKDAHNML "; // CJFGIEOBKDAHNML
+			var g_Answer = "ABCDEFGHIJKLMNO "
+
+			function F_AssignTest( l_NumberOfSquares ){
+				for (var i = 0; i < l_NumberOfSquares; i++){
+					g_goSquareArray[i].Text = g_Text[i];
+				}
+			}
+
+			F_AssignTest( g_NumberOfSquares );
+
+			var g_goStartButton = new C_Button("Start", 220, 200, "Red", 150, 80);
+			g_goStartButton.IsActive = true;
+
+			var g_goHelpButton = new C_Button("Help", 220, 350, "Red", 150, 80);
+			g_goHelpButton.IsActive = true;
+
+			var g_goInstructionButton = new C_Button("Instruction", 150, 350, "Red", 100, 80);
+
+			var g_goTitleText = new C_Text( "Tile Game", 180, 100 );
+			var g_goWinText = new C_Text( "You Won", 220, 300 );
+			g_goTitleText.IsActive = true;
+
+			var g_goControlButton = new C_Button("Control", 180, 200, "Red", 220, 80);
+			var g_goBackButton = new C_Button("Back", 220, 500, "Red", 150, 80);
+			var g_goRestartButton = new C_Button("ReStart", 215, 500, "Red", 200, 80);
+
+			var g_goHelpText = new C_Text( "Help", 240, 100 );
+			var g_goControlText = new C_Text( "Control", 220, 100 );
+			var g_goInstructionText = new C_Text( "Instruction", 180, 100 );
+			var g_BoolShouldDisplayControls = false;
+			var g_BoolShouldDisplayInstructions = false;
+
+			function F_WriteControls( l_Ctx )
+			{
+				if ( g_BoolShouldDisplayControls )
+				{
+				   l_Ctx.strokeStyle = "Black";
+				   l_Ctx.lineWidth = "4";
+				   l_Ctx.strokeRect( 120, 200, 360, 150);
+				   l_Ctx.stroke();
+				   l_Ctx.font = "bold 28px serif" ;
+				   l_Ctx.fillStyle = "Blue" ;
+				   l_Ctx.fillText("Click on the tile next to", 150, 250) ;
+				   l_Ctx.fillText("the empty tile to switch tiles", 130, 300) ;
+				}
+			}
+
+			function F_WriteInstructions ( l_Ctx  )
+			{
+				if( g_BoolShouldDisplayInstructions )
+				{
+				   l_Ctx.font = "bold 32px serif";
+				   l_Ctx.fillStyle = "Blue";
+				   l_Ctx.fillText("How To Play", 200, 140) ;
+				   l_Ctx.font = "bold 28px serif";
+				   l_Ctx.fillStyle = "black";
+				   l_Ctx.fillText("Arrange the tiles from A to N in ", 100, 200);
+				   l_Ctx.fillText("alphabetical order to win", 125, 230);
+				   l_Ctx.strokeRect( 5, 170, 590, 80);
+				   l_Ctx.lineWidth = "2";
+				   l_Ctx.strokeStyle = "white";
+				   l_Ctx.stroke();
+				   l_Ctx.font = "bold 48px serif";
+				}
+			}
+
+
+			function F_GameManager()
+			{
+				switch( g_StrState ){
+						case "Start":
+								g_goTitleText.M_DrawText( g_Ctx);
+								g_goHelpText.M_DrawText( g_Ctx);
+								g_goStartButton.M_DrawButton( g_Ctx );
+								g_goHelpButton.M_DrawButton( g_Ctx );
+								g_goControlButton.M_DrawButton( g_Ctx );
+								g_goBackButton.M_DrawButton( g_Ctx );
+								g_goControlText.M_DrawText( g_Ctx );
+								g_goInstructionText.M_DrawText( g_Ctx );
+								g_goInstructionButton.M_DrawButton( g_Ctx );
+								F_WriteControls( g_Ctx ) ;
+								F_WriteInstructions ( g_Ctx  ) ;
+								break;
+
+						case "Running":
+								F_DrawSquares( g_NumberOfSquares );
+								F_DrawText( g_Ctx );
+								break;
+
+						case "Completed":
+								g_goRestartButton.M_DrawButton( g_Ctx );
+								g_goWinText.M_DrawText( g_Ctx );
+				}
+			}
+
+			function f_gameLoop()
+			{
+				F_ClearCanvas( g_CanvasWidth, g_CanvasHeight, g_Ctx);
+				F_GameManager() ;
+			}
+
+			var g_gameLoopId = setInterval(f_gameLoop, g_SetInterval);
+		</SCRIPT>
+	</BODY>
+</HTML>
